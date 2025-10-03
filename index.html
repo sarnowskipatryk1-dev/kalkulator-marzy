@@ -4,25 +4,16 @@
 <base href="./">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Kalkulator marży – listy materiałowe (v5)</title>
+<title>Kalkulator marży – listy materiałowe (GitHub Cloud DB)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#ffffff; --card:#f7f7f8; --text:#111; --muted:#666; --line:#e6e6e6;
-    --primary:#2563eb; --ok:#16a34a; --warn:#d97706; --danger:#b91c1c;
-    --shadow:0 10px 30px rgba(0,0,0,.06);
-  }
-  .dark:root{
-    --bg:#0b1220; --card:#0f1420; --text:#e6eef8; --muted:#9db2cf; --line:#1d2740;
-    --primary:#3b82f6; --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444;
-    --shadow:0 12px 40px rgba(0,0,0,.35);
-  }
+  :root{ --bg:#ffffff; --card:#f7f7f8; --text:#111; --muted:#666; --line:#e6e6e6; --primary:#2563eb; --ok:#16a34a; --warn:#d97706; --danger:#b91c1c; --shadow:0 10px 30px rgba(0,0,0,.06); }
+  .dark:root{ --bg:#0b1220; --card:#0f1420; --text:#e6eef8; --muted:#9db2cf; --line:#1d2740; --primary:#3b82f6; --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444; --shadow:0 12px 40px rgba(0,0,0,.35); }
   *{box-sizing:border-box}
   body{margin:0; font-family:Montserrat,system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text)}
-  header{position:sticky; top:0; z-index:20; backdrop-filter:saturate(180%) blur(8px);
-    background:color-mix(in oklab, var(--bg) 82%, transparent); border-bottom:1px solid var(--line)}
+  header{position:sticky; top:0; z-index:20; backdrop-filter:saturate(180%) blur(8px); background:color-mix(in oklab, var(--bg) 82%, transparent); border-bottom:1px solid var(--line)}
   .wrap{max-width:1200px; margin:0 auto; padding:16px}
   h1{font-size:20px; margin:0 0 4px}
   .sub{color:var(--muted); font-size:13px}
@@ -46,15 +37,11 @@
   table{width:100%; border-collapse:collapse; font-size:13px}
   th,td{border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:middle}
   thead th{position:sticky; top:var(--stickyTop); background:var(--card); z-index:10}
-  td input, td textarea{
-    width:100%; padding:8px 10px; border:1px solid var(--line);
-    border-radius:8px; background:transparent; color:var(--text)
-  }
+  td input, td textarea{ width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text) }
   td textarea{resize:vertical; min-height:40px}
   .section{margin:16px 0}
   .section h2{font-size:16px; margin:0 0 10px}
   .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:999px}
-  .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; border:1px solid var(--line); padding:2px 6px; border-radius:6px; font-size:12px}
   .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;}
   .small{font-size:12px}
   .hint{font-size:12px; color:var(--muted)}
@@ -72,12 +59,15 @@
   <div class="wrap topbar">
     <div>
       <h1>Kalkulator marży – listy materiałowe</h1>
-      <div class="sub">Tryb online (GitHub Pages). Dane zapisują się w przeglądarce (localStorage).</div>
+      <div class="sub">Tryb online + wspólna baza w GitHub (przez bezpieczny Worker).</div>
     </div>
     <div class="row">
       <button id="btnTheme" class="ghost" title="Przełącz motyw">🌓 Motyw</button>
       <a class="tag" href="#" id="rateStamp">Kurs: —</a>
       <button id="btnFetch" class="primary">Pobierz kursy</button>
+      <button id="btnPull">↻ Pobierz bazę</button>
+      <button id="btnPush">⬆ Zapisz do bazy</button>
+      <span id="cloudBadge" class="tag">Cloud: offline</span>
     </div>
   </div>
 </header>
@@ -91,7 +81,7 @@
       <input id="listName" type="text" placeholder="Nazwa listy" />
       <button id="btnNewList">+ Nowa lista</button>
       <button id="btnDeleteList" class="danger">Usuń listę</button>
-      <span class="right hint">Wszystko zapisuje się automatycznie</span>
+      <span class="right hint">Autozapis lokalny + możliwość wspólnej bazy (GitHub).</span>
     </div>
 
     <div class="tabs">
@@ -133,7 +123,7 @@
         <div class="row" style="margin-top:12px">
           <button id="btnAdd">+ Dodaj wiersz</button>
           <button id="btnClear">Wyczyść listę</button>
-          <span class="hint">Ceny z dokładnością do 2 miejsc po przecinku.</span>
+          <span class="hint">Ceny do 2 miejsc po przecinku.</span>
         </div>
       </div>
     </section>
@@ -148,7 +138,7 @@
           <span class="small">Koszt eksportu (PLN)</span>
           <input id="costExport" type="number" step="0.01" placeholder="0.00" />
         </div>
-        <div></div>
+        <div class="pill">Ostatnio edytowano: <span id="lastEdit" class="mono">—</span></div>
       </div>
 
       <div class="grid cols-3" style="margin-top:12px">
@@ -160,7 +150,7 @@
           <span class="small">…lub wpisz cenę sprzedaży (PLN)</span>
           <input id="targetPrice" type="number" step="0.01" placeholder="0.00" />
         </div>
-        <div class="pill">Ostatnio edytowano: <span id="lastEdit" class="mono">—</span></div>
+        <div></div>
       </div>
 
       <div class="grid cols-3" style="margin-top:12px">
@@ -197,104 +187,87 @@
 </main>
 
 <script>
+// ===== KONFIG: URL Twojego Workera (po wdrożeniu punkt 2 poniżej) =====
+const WORKER_BASE = 'aged-hat-0c61.sarnowskipatryk1.workers.dev'; // ← ZMIEŃ na swój adres!
+
+// ============================================================
+//  Frontend: działa na GitHub Pages. Baza = plik JSON w repo,
+//  zapisywany przez bezpieczny Cloudflare Worker (token w sekrecie).
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', function(){
   // ======= STATE =======
-  const DEFAULT_ROW = () => ({
-    id: 'R' + Math.random().toString(36).slice(2,9),
-    name:'', part:'', supplier:'', qty:1,
-    unitUSD:0, unitEUR:0, unitPLN:0, lastEdited:'PLN'
-  });
+  const DEFAULT_ROW = () => ({ id: uid('R'), name:'', part:'', supplier:'', qty:1, unitUSD:0, unitEUR:0, unitPLN:0, lastEdited:'PLN' });
+  const DEFAULT_LIST = () => ({ id: uid('L'), name: 'Nowa lista', rows: [], analysis: { importPLN: 0, exportPLN: 0, marginPct: 0, targetPricePLN: 0 } });
+  const state = { lists: [], currentListId: null, rates: { USDPLN: null, EURPLN: null, asOf: null }, theme: localStorage.getItem('theme') || 'light' };
 
-  const DEFAULT_LIST = () => ({
-    id: 'L' + Math.random().toString(36).slice(2,9),
-    name: 'Nowa lista',
-    rows: [],
-    analysis: {
-      importPLN: 0, exportPLN: 0,
-      marginPct: 0,          // tylko marża
-      targetPricePLN: 0      // cena sprzedaży wpisana przez użytkownika
-    }
-  });
-
-  const state = {
-    lists: [],
-    currentListId: null,
-    rates: { USDPLN: null, EURPLN: null, asOf: null },
-    theme: localStorage.getItem('theme') || 'light',
-  };
-
-  // ======= UTIL =======
+  // ===== UTIL =====
   const $ = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
   const fmt = (n, d=2) => (isFinite(n) ? Number(n).toFixed(d) : '0.00');
-  const round2 = n => Math.round((Number(n)||0) * 100) / 100;
+  const uid = (p) => p + Math.random().toString(36).slice(2,9);
+  const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 
-  function save(){ try{ localStorage.setItem('kalk-marza-lists', JSON.stringify(state)); }catch(e){} }
-  function load(){
-    const raw = localStorage.getItem('kalk-marza-lists'); if(!raw) return;
+  function saveLocal(){ try{ localStorage.setItem('kalk-marza-lists', JSON.stringify(state)); }catch(e){} }
+  function loadLocal(){ const raw = localStorage.getItem('kalk-marza-lists'); if(!raw) return; try{ const data = JSON.parse(raw); Object.assign(state, data); }catch(e){} }
+
+  // ===== REMOTE (Worker) =====
+  async function pullCloud(){
+    setCloudBadge('pobieram…');
     try{
-      const data = JSON.parse(raw);
-      if(Array.isArray(data.lists)) state.lists = data.lists;
-      if(data.currentListId) state.currentListId = data.currentListId;
-      if(data.rates) state.rates = data.rates;
-      if(data.theme) state.theme = data.theme;
-    }catch(e){ console.warn('Nie udało się wczytać danych z localStorage', e); }
+      const r = await fetch(WORKER_BASE + '/data', { cache:'no-store' });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const json = await r.json();
+      if(json && typeof json === 'object'){
+        // spodziewamy się { state: {...} } lub sam obiekt state dla kompatybilności
+        const payload = json.state || json;
+        if(payload && typeof payload === 'object'){
+          state.lists = payload.lists || state.lists;
+          state.currentListId = payload.currentListId || state.currentListId;
+          state.rates = payload.rates || state.rates;
+          state.theme = payload.theme || state.theme;
+          saveLocal();
+          refreshListSelect(); renderRows(); updateAnalysis(); applyTheme();
+        }
+      }
+      setCloudBadge('online');
+    }catch(e){ console.error(e); setCloudBadge('offline'); alert('Nie udało się pobrać bazy z chmury. Sprawdź WORKER_BASE.'); }
   }
 
-  function uid(){ return Math.random().toString(36).slice(2,9); }
-
-  // ======= KURSY NBP =======
-  async function fetchNBPRates(){
-    const btn = $('#btnFetch');
-    btn.disabled = true; btn.textContent = 'Pobieram...';
+  const pushCloud = debounce(async function(){
+    if(!WORKER_BASE || WORKER_BASE.includes('TWOJ-SUBDOMAIN')) return; // użytkownik nie skonfigurował
+    setCloudBadge('zapisuję…');
     try{
-      const res = await fetch('https://api.nbp.pl/api/exchangerates/tables/A?format=json', {headers:{'Accept':'application/json'}});
+      const r = await fetch(WORKER_BASE + '/data', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ state })
+      });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      setCloudBadge('online');
+    }catch(e){ console.error(e); setCloudBadge('offline'); }
+  }, 800);
+
+  function setCloudBadge(txt){ const b = $('#cloudBadge'); if(!b) return; b.textContent = 'Cloud: ' + txt; }
+
+  // ===== KURSY NBP =====
+  async function fetchNBPRates(){ const btn=$('#btnFetch'); btn.disabled=true; btn.textContent='Pobieram...';
+    try{ const res = await fetch('https://api.nbp.pl/api/exchangerates/tables/A?format=json', {headers:{'Accept':'application/json'}});
       if(!res.ok) throw new Error('NBP HTTP '+res.status);
-      const data = await res.json();
-      const table = data?.[0];
-      const rates = table?.rates || [];
-      const USD = rates.find(r => r.code === 'USD');
-      const EUR = rates.find(r => r.code === 'EUR');
-      if(!USD || !EUR) throw new Error('Brak USD/EUR w odpowiedzi NBP');
-      state.rates.USDPLN = Number(USD.mid);
-      state.rates.EURPLN = Number(EUR.mid);
-      state.rates.asOf = table?.effectiveDate || new Date().toISOString().slice(0,10);
-      $('#rateUSD').value = state.rates.USDPLN;
-      $('#rateEUR').value = state.rates.EURPLN;
-      $('#rateStamp').textContent = `Kurs z: ${state.rates.asOf}`;
-      save();
-      recalcAll();
-      updateAnalysis();
-    }catch(err){
-      alert('Nie udało się pobrać kursów NBP. Wpisz kursy ręcznie.\n\nSzczegóły: '+err.message);
-    }finally{
-      btn.disabled = false; btn.textContent = 'Pobierz kursy';
-    }
+      const data = await res.json(); const table = data?.[0]; const rates = table?.rates || [];
+      const USD = rates.find(r => r.code==='USD'); const EUR = rates.find(r => r.code==='EUR');
+      state.rates.USDPLN = Number(USD.mid); state.rates.EURPLN = Number(EUR.mid); state.rates.asOf = table?.effectiveDate || new Date().toISOString().slice(0,10);
+      $('#rateUSD').value = state.rates.USDPLN; $('#rateEUR').value = state.rates.EURPLN; $('#rateStamp').textContent = `Kurs z: ${state.rates.asOf}`;
+      saveLocal(); recalcAll(); updateAnalysis(); pushCloud();
+    }catch(err){ alert('Nie udało się pobrać kursów NBP. Wpisz kursy ręcznie.'); }
+    finally{ btn.disabled=false; btn.textContent='Pobierz kursy'; }
   }
 
-  // ======= LISTY: UI =======
-  function refreshListSelect(){
-    const sel = $('#listSelect');
-    sel.innerHTML = '';
-    state.lists.forEach(l=>{
-      const opt = document.createElement('option');
-      opt.value = l.id; opt.textContent = l.name || 'Bez nazwy';
-      sel.appendChild(opt);
-    });
-    sel.value = state.currentListId || (state.lists[0]?.id || '');
-    $('#listName').value = currentList()?.name || '';
-  }
-
+  // ===== LISTY UI =====
+  function refreshListSelect(){ const sel=$('#listSelect'); sel.innerHTML=''; state.lists.forEach(l=>{ const opt=document.createElement('option'); opt.value=l.id; opt.textContent=l.name||'Bez nazwy'; sel.appendChild(opt); }); sel.value=state.currentListId || (state.lists[0]?.id||''); $('#listName').value = currentList()?.name || '' }
   function currentList(){ return state.lists.find(l=>l.id===state.currentListId); }
 
-  function renderRows(){
-    const tb = $('#rows'); tb.innerHTML = '';
-    const cl = currentList(); if(!cl) return;
-    const { USDPLN, EURPLN } = state.rates;
-
-    cl.rows.forEach(row=>{
-      const tr = document.createElement('tr');
-      const cells = [
+  function renderRows(){ const tb=$('#rows'); tb.innerHTML=''; const cl=currentList(); if(!cl) return; const {USDPLN,EURPLN}=state.rates;
+    cl.rows.forEach(row=>{ const tr=document.createElement('tr');
+      tr.innerHTML = [
         `<td><textarea data-k="name" rows="2" placeholder="Opis materiału">${row.name||''}</textarea></td>`,
         `<td><input data-k="part" type="text" placeholder="Nr części" value="${row.part||''}" /></td>`,
         `<td><input data-k="supplier" type="text" placeholder="Dostawca" value="${row.supplier||''}" /></td>`,
@@ -304,225 +277,421 @@ document.addEventListener('DOMContentLoaded', function(){
         `<td><input class="num" data-k="unitPLN" type="number" step="0.01" value="${fmt(row.unitPLN||0)}"/></td>`,
         `<td class="mono">${fmt(toPLN(row, USDPLN, EURPLN))}</td>`,
         `<td><button data-act="del" class="ghost">Usuń</button></td>`
-      ];
-      tr.innerHTML = cells.join('');
-      tr.dataset.id = row.id;
-      tb.appendChild(tr);
+      ].join('');
+      tr.dataset.id=row.id; tb.appendChild(tr);
     });
-
     tb.addEventListener('input', onEdit, {once:true});
     tb.addEventListener('click', onClick, {once:true});
-
     updateSum();
   }
 
-  function onEdit(e){
-    const tr = e.target.closest('tr'); if(!tr) return;
-    const id = tr.dataset.id; const k = e.target.dataset.k; if(!k) return;
-    const cl = currentList(); const row = cl.rows.find(r=>r.id===id); if(!row) return;
-    if(['qty','unitUSD','unitEUR','unitPLN'].includes(k)) row[k] = Number(e.target.value||0);
-    else row[k] = e.target.value;
-
-    if(['unitUSD','unitEUR','unitPLN'].includes(k)) row.lastEdited = k.replace('unit','');
-
-    save();
-    renderRows();
-    updateAnalysis();
+  function onEdit(e){ const tr=e.target.closest('tr'); if(!tr) return; const id=tr.dataset.id; const k=e.target.dataset.k; if(!k) return; const cl=currentList(); const row=cl.rows.find(r=>r.id===id); if(!row) return;
+    if(['qty','unitUSD','unitEUR','unitPLN'].includes(k)) row[k]=Number(e.target.value||0); else row[k]=e.target.value;
+    if(['unitUSD','unitEUR','unitPLN'].includes(k)) row.lastEdited=k.replace('unit','');
+    saveLocal(); renderRows(); updateAnalysis(); pushCloud();
   }
 
-  function onClick(e){
-    if(e.target.dataset.act === 'del'){
-      const id = e.target.closest('tr')?.dataset.id;
-      const cl = currentList();
-      cl.rows = cl.rows.filter(r=>r.id!==id);
-      save();
-      renderRows();
-      updateAnalysis();
-    }
-  }
+  function onClick(e){ if(e.target.dataset.act==='del'){ const id=e.target.closest('tr')?.dataset.id; const cl=currentList(); cl.rows = cl.rows.filter(r=>r.id!==id); saveLocal(); renderRows(); updateAnalysis(); pushCloud(); } }
 
-  function updateSum(){
-    const cl = currentList(); if(!cl) return;
-    const { USDPLN, EURPLN } = state.rates;
-    const sum = cl.rows.reduce((acc,r)=> acc + toPLN(r, USDPLN, EURPLN), 0);
-    $('#sumPLN').textContent = fmt(sum);
-  }
+  function updateSum(){ const cl=currentList(); if(!cl) return; const {USDPLN,EURPLN}=state.rates; const sum=cl.rows.reduce((acc,r)=> acc + toPLN(r,USDPLN,EURPLN), 0); $('#sumPLN').textContent=fmt(sum); }
 
-  function toPLN(row, USDPLN, EURPLN){
-    const qty = Number(row.qty||0);
+  function toPLN(row, USDPLN, EURPLN){ const qty=Number(row.qty||0);
     if(row.lastEdited==='USD' && USDPLN) return qty * Number(row.unitUSD||0) * USDPLN;
     if(row.lastEdited==='EUR' && EURPLN) return qty * Number(row.unitEUR||0) * EURPLN;
     if(row.lastEdited==='PLN') return qty * Number(row.unitPLN||0);
-
-    // Gdy brak lastEdited — preferuj PLN, potem USD, potem EUR
     if(row.unitPLN) return qty * Number(row.unitPLN||0);
     if(row.unitUSD && USDPLN) return qty * Number(row.unitUSD||0) * USDPLN;
-    if(row.unitEUR && EURPLN) return qty * Number(row.unitEUR||0) * EURPLN;
-    return 0;
+    if(row.unitEUR && EURPLN) return qty * Number(row.unitEUR||0) * EURPLN; return 0; }
+
+  function updateAnalysis(){ const cl=currentList(); if(!cl) return; const sumPLN=Number($('#sumPLN').textContent)||0; const importPLN=Number($('#costImport').value||cl.analysis.importPLN||0); const exportPLN=Number($('#costExport').value||cl.analysis.exportPLN||0); let marginPct=($('#marginPct').value!==''?Number($('#marginPct').value):cl.analysis.marginPct||0); let targetPLN=($('#targetPrice').value!==''?Number($('#targetPrice').value):cl.analysis.targetPricePLN||0);
+    const cost=sumPLN+importPLN+exportPLN; const lastEdit=updateAnalysis.lastEdit||'margin'; if(lastEdit==='margin'){ targetPLN = cost * (1+(marginPct/100)); } else { marginPct = cost ? ((targetPLN-cost)/cost)*100 : 0; }
+    cl.analysis={ importPLN, exportPLN, marginPct, targetPricePLN: targetPLN };
+    $('#resCostPLN').textContent=fmt(cost); $('#resMarginPct').textContent=fmt(marginPct,2)+'%'; $('#resTargetPLN').textContent=fmt(targetPLN);
+    const {USDPLN,EURPLN}=state.rates; const sumUSD=USDPLN? sumPLN/USDPLN:0; const sumEUR=EURPLN? sumPLN/EURPLN:0; $('#resMatUSD').textContent=fmt(sumUSD); $('#resMatEUR').textContent=fmt(sumEUR); $('#resMatPLN').textContent=fmt(sumPLN);
+    saveLocal(); pushCloud();
   }
 
-  function convertPLNto(row, cur, USDPLN, EURPLN){
-    const pln = Number(row.unitPLN||0);
-    if(cur==='USD' && USDPLN) return pln / USDPLN;
-    if(cur==='EUR' && EURPLN) return pln / EURPLN;
-    return 0;
-  }
-
-  // ======= ANALIZA =======
-  function updateAnalysis(){
-    const cl = currentList(); if(!cl) return;
-
-    const sumPLN = Number($('#sumPLN').textContent) || 0;
-    const importPLN = Number($('#costImport').value || cl.analysis.importPLN || 0);
-    const exportPLN = Number($('#costExport').value || cl.analysis.exportPLN || 0);
-    let marginPct = ($('#marginPct').value !== '' ? Number($('#marginPct').value) : cl.analysis.marginPct || 0);
-    let targetPLN = ($('#targetPrice').value !== '' ? Number($('#targetPrice').value) : cl.analysis.targetPricePLN || 0);
-
-    const cost = sumPLN + importPLN + exportPLN;
-    const lastEdit = updateAnalysis.lastEdit || 'margin';
-
-    if(lastEdit === 'margin'){
-      // użytkownik edytował marżę → wylicz cenę sprzedaży
-      targetPLN = cost * (1 + (marginPct/100));
-    }else{
-      // użytkownik edytował cenę sprzedaży → wylicz marżę
-      marginPct = cost ? ((targetPLN - cost) / cost) * 100 : 0;
-    }
-
-    cl.analysis.importPLN = importPLN;
-    cl.analysis.exportPLN = exportPLN;
-    cl.analysis.marginPct = marginPct;
-    cl.analysis.targetPricePLN = targetPLN;
-
-    $('#resCostPLN').textContent = fmt(cost);
-    $('#resMarginPct').textContent = fmt(marginPct, 2) + '%';
-    $('#resTargetPLN').textContent = fmt(targetPLN);
-
-    const { USDPLN, EURPLN } = state.rates;
-    const sumUSD = USDPLN ? sumPLN / USDPLN : 0;
-    const sumEUR = EURPLN ? sumPLN / EURPLN : 0;
-    $('#resMatUSD').textContent = fmt(sumUSD);
-    $('#resMatEUR').textContent = fmt(sumEUR);
-    $('#resMatPLN').textContent = fmt(sumPLN);
-
-    save();
-  }
-
-  // ======= WIĄZANIA =======
   function wire(){
-    $('#btnTheme').addEventListener('click', ()=>{
-      state.theme = (state.theme==='light'?'dark':'light');
-      save();
-      applyTheme();
-    });
-
+    $('#btnTheme').addEventListener('click', ()=>{ state.theme = (state.theme==='light'?'dark':'light'); saveLocal(); applyTheme(); });
     $('#btnFetch').addEventListener('click', fetchNBPRates);
-
-    $('#btnAdd').addEventListener('click', ()=>{
-      const cl = currentList(); if(!cl) return;
-      cl.rows.push(DEFAULT_ROW());
-      save();
-      renderRows();
-    });
-
-    $('#btnClear').addEventListener('click', ()=>{
-      const cl = currentList(); if(!cl) return;
-      if(confirm('Wyczyścić wszystkie wiersze tej listy?')){
-        cl.rows = [];
-        save();
-        renderRows();
-        updateAnalysis();
-      }
-    });
-
-    $$('.tab').forEach(t=> t.addEventListener('click', ()=>{
-      $$('.tab').forEach(x=>x.classList.remove('active'));
-      t.classList.add('active');
-      const name = t.dataset.tab;
-      $('#tab-bom').hidden = name !== 'bom';
-      $('#tab-analysis').hidden = name !== 'analysis';
-      document.documentElement.style.setProperty('--stickyTop', name==='bom' ? 'calc(56px + 16px)' : '56px');
-    }));
-
-    $('#listSelect').addEventListener('change', (e)=>{
-      state.currentListId = e.target.value;
-      save();
-      renderRows();
-      updateAnalysis();
-    });
-
-    $('#listName').addEventListener('input', (e)=>{
-      const cl = currentList(); if(!cl) return;
-      cl.name = e.target.value;
-      save();
-      refreshListSelect();
-    });
-
-    $('#btnNewList').addEventListener('click', ()=>{
-      const list = DEFAULT_LIST();
-      list.name = 'Lista ' + (state.lists.length + 1);
-      state.lists.push(list);
-      state.currentListId = list.id;
-      save();
-      refreshListSelect();
-      renderRows();
-      updateAnalysis();
-    });
-
-    $('#btnDeleteList').addEventListener('click', ()=>{
-      if(!state.currentListId) return;
-      if(!confirm('Usunąć bieżącą listę?')) return;
-      state.lists = state.lists.filter(l=>l.id!==state.currentListId);
-      state.currentListId = state.lists[0]?.id || null;
-      save();
-      refreshListSelect();
-      renderRows();
-      updateAnalysis();
-    });
-
+    $('#btnAdd').addEventListener('click', ()=>{ const cl=currentList(); cl.rows.push(DEFAULT_ROW()); saveLocal(); renderRows(); pushCloud(); });
+    $('#btnClear').addEventListener('click', ()=>{ const cl=currentList(); if(confirm('Wyczyścić wszystkie wiersze tej listy?')){ cl.rows=[]; saveLocal(); renderRows(); updateAnalysis(); pushCloud(); } });
+    $$('.tab').forEach(t=> t.addEventListener('click', ()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const name=t.dataset.tab; $('#tab-bom').hidden = name!=='bom'; $('#tab-analysis').hidden = name!=='analysis'; document.documentElement.style.setProperty('--stickyTop', name==='bom' ? 'calc(56px + 16px)' : '56px'); }));
+    $('#listSelect').addEventListener('change', (e)=>{ state.currentListId=e.target.value; saveLocal(); renderRows(); updateAnalysis(); pushCloud(); });
+    $('#listName').addEventListener('input', (e)=>{ const cl=currentList(); cl.name=e.target.value; saveLocal(); refreshListSelect(); pushCloud(); });
+    $('#btnNewList').addEventListener('click', ()=>{ const list=DEFAULT_LIST(); list.name='Lista '+(state.lists.length+1); state.lists.push(list); state.currentListId=list.id; saveLocal(); refreshListSelect(); renderRows(); updateAnalysis(); pushCloud(); });
+    $('#btnDeleteList').addEventListener('click', ()=>{ if(!state.currentListId) return; if(!confirm('Usunąć bieżącą listę?')) return; state.lists = state.lists.filter(l=>l.id!==state.currentListId); state.currentListId = state.lists[0]?.id || null; saveLocal(); refreshListSelect(); renderRows(); updateAnalysis(); pushCloud(); });
     $('#costImport').addEventListener('input', ()=>{ updateAnalysis.lastEdit='margin'; updateAnalysis(); });
     $('#costExport').addEventListener('input', ()=>{ updateAnalysis.lastEdit='margin'; updateAnalysis(); });
-
     $('#marginPct').addEventListener('input', ()=>{ updateAnalysis.lastEdit='margin'; updateAnalysis(); });
     $('#targetPrice').addEventListener('input', ()=>{ updateAnalysis.lastEdit='price'; updateAnalysis(); });
-
-    $('#rateUSD').addEventListener('input', ()=>{ state.rates.USDPLN = Number($('#rateUSD').value||0); save(); recalcAll(); updateAnalysis(); });
-    $('#rateEUR').addEventListener('input', ()=>{ state.rates.EURPLN = Number($('#rateEUR').value||0); save(); recalcAll(); updateAnalysis(); });
+    $('#rateUSD').addEventListener('input', ()=>{ state.rates.USDPLN=Number($('#rateUSD').value||0); saveLocal(); recalcAll(); updateAnalysis(); });
+    $('#rateEUR').addEventListener('input', ()=>{ state.rates.EURPLN=Number($('#rateEUR').value||0); saveLocal(); recalcAll(); updateAnalysis(); });
+    $('#btnPull').addEventListener('click', pullCloud);
+    $('#btnPush').addEventListener('click', ()=> pushCloud());
   }
 
   function recalcAll(){ renderRows(); updateSum(); }
+  function applyTheme(){ if(state.theme==='dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); }
 
-  function applyTheme(){
-    if(state.theme==='dark') document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
+  // INIT
+  loadLocal();
+  if(state.lists.length===0){ const list=DEFAULT_LIST(); list.name='Lista 1'; list.rows=[DEFAULT_ROW()]; state.lists.push(list); state.currentListId=list.id; }
+  else if(!state.currentListId){ state.currentListId = state.lists[0].id; }
+  refreshListSelect(); wire(); applyTheme(); renderRows();
+  if(state.rates?.USDPLN) $('#rateUSD').value=state.rates.USDPLN; if(state.rates?.EURPLN) $('#rateEUR').value=state.rates.EURPLN; if(state.rates?.asOf) $('#rateStamp').textContent=`Kurs z: ${state.rates.asOf}`; updateAnalysis();
+
+  // Pierwsze pobranie bazy z chmury (jeśli skonfigurowano URL)
+  if(WORKER_BASE && !WORKER_BASE.includes('TWOJ-SUBDOMAIN')) pullCloud();
+});
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<base href="./">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kalkulator marży – listy materiałowe (GitHub Cloud DB)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#ffffff; --card:#f7f7f8; --text:#111; --muted:#666; --line:#e6e6e6; --primary:#2563eb; --ok:#16a34a; --warn:#d97706; --danger:#b91c1c; --shadow:0 10px 30px rgba(0,0,0,.06); }
+  .dark:root{ --bg:#0b1220; --card:#0f1420; --text:#e6eef8; --muted:#9db2cf; --line:#1d2740; --primary:#3b82f6; --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444; --shadow:0 12px 40px rgba(0,0,0,.35); }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:Montserrat,system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text)}
+  header{position:sticky; top:0; z-index:20; backdrop-filter:saturate(180%) blur(8px); background:color-mix(in oklab, var(--bg) 82%, transparent); border-bottom:1px solid var(--line)}
+  .wrap{max-width:1200px; margin:0 auto; padding:16px}
+  h1{font-size:20px; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:13px}
+  .topbar{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow)}
+  button, input, select, textarea{font-family:inherit; font-size:14px}
+  button{border:1px solid var(--line); background:#fff; color:#111; padding:10px 14px; border-radius:12px; cursor:pointer}
+  .dark button{background:#0f1420; color:var(--text)}
+  button.primary{background:var(--primary); color:white; border-color:transparent}
+  button.ghost{background:transparent}
+  button:disabled{opacity:.6; cursor:not-allowed}
+  .tag{font-size:12px; padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:transparent}
+  .ratebox{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .ratebox input{width:110px; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:transparent; color:var(--text)}
+  .tabs{display:flex; gap:8px; margin:16px 0}
+  .tab{padding:10px 14px; border:1px solid var(--line); border-radius:12px; cursor:pointer; background:transparent}
+  .tab.active{background:var(--primary); color:#fff; border-color:transparent}
+  .toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .toolbar select, .toolbar input[type="text"]{padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:transparent; color:var(--text)}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th,td{border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:middle}
+  thead th{position:sticky; top:var(--stickyTop); background:var(--card); z-index:10}
+  td input, td textarea{ width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text) }
+  td textarea{resize:vertical; min-height:40px}
+  .section{margin:16px 0}
+  .section h2{font-size:16px; margin:0 0 10px}
+  .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:999px}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;}
+  .small{font-size:12px}
+  .hint{font-size:12px; color:var(--muted)}
+  .ok{color:var(--ok)}
+  .danger{color:var(--danger)}
+  .right{margin-left:auto}
+  .grid{display:grid; gap:12px}
+  .grid.cols-2{grid-template-columns:1fr 1fr}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap topbar">
+    <div>
+      <h1>Kalkulator marży – listy materiałowe</h1>
+      <div class="sub">Tryb online + wspólna baza w GitHub (przez bezpieczny Worker).</div>
+    </div>
+    <div class="row">
+      <button id="btnTheme" class="ghost" title="Przełącz motyw">🌓 Motyw</button>
+      <a class="tag" href="#" id="rateStamp">Kurs: —</a>
+      <button id="btnFetch" class="primary">Pobierz kursy</button>
+      <button id="btnPull">↻ Pobierz bazę</button>
+      <button id="btnPush">⬆ Zapisz do bazy</button>
+      <span id="cloudBadge" class="tag">Cloud: offline</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="section card">
+    <div class="toolbar">
+      <label>Lista:
+        <select id="listSelect"></select>
+      </label>
+      <input id="listName" type="text" placeholder="Nazwa listy" />
+      <button id="btnNewList">+ Nowa lista</button>
+      <button id="btnDeleteList" class="danger">Usuń listę</button>
+      <span class="right hint">Autozapis lokalny + możliwość wspólnej bazy (GitHub).</span>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="bom">Lista materiałowa</div>
+      <div class="tab" data-tab="analysis">Analiza / marża</div>
+    </div>
+
+    <section id="tab-bom" class="section">
+      <div class="grid cols-4">
+        <div><span class="small">Kurs USD→PLN</span><input id="rateUSD" type="number" step="0.0001" placeholder="4.0000" /></div>
+        <div><span class="small">Kurs EUR→PLN</span><input id="rateEUR" type="number" step="0.0001" placeholder="4.3000" /></div>
+        <div class="ratebox"><span class="small">Źródło kursów:</span><span class="tag mono">NBP</span></div>
+      </div>
+
+      <div class="section">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th style="width:22ch">Nazwa materiału</th>
+              <th>Nr części</th>
+              <th>Dostawca</th>
+              <th style="width:10ch">Ilość</th>
+              <th style="width:14ch">USD/szt</th>
+              <th style="width:14ch">EUR/szt</th>
+              <th style="width:14ch">PLN/szt</th>
+              <th>Wartość PLN</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="7" style="text-align:right">Suma materiałów (PLN)</td>
+              <td class="mono" id="sumPLN">0.00</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+        <div class="row" style="margin-top:12px">
+          <button id="btnAdd">+ Dodaj wiersz</button>
+          <button id="btnClear">Wyczyść listę</button>
+          <span class="hint">Ceny do 2 miejsc po przecinku.</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-analysis" class="section" hidden>
+      <div class="grid cols-3">
+        <div>
+          <span class="small">Koszt importu (PLN)</span>
+          <input id="costImport" type="number" step="0.01" placeholder="0.00" />
+        </div>
+        <div>
+          <span class="small">Koszt eksportu (PLN)</span>
+          <input id="costExport" type="number" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="pill">Ostatnio edytowano: <span id="lastEdit" class="mono">—</span></div>
+      </div>
+
+      <div class="grid cols-3" style="margin-top:12px">
+        <div>
+          <span class="small">Wpisz marżę %</span>
+          <input id="marginPct" type="number" step="0.01" placeholder="0.00" />
+        </div>
+        <div>
+          <span class="small">…lub wpisz cenę sprzedaży (PLN)</span>
+          <input id="targetPrice" type="number" step="0.01" placeholder="0.00" />
+        </div>
+        <div></div>
+      </div>
+
+      <div class="grid cols-3" style="margin-top:12px">
+        <div class="card">
+          <div class="small">Suma kosztu (PLN)</div>
+          <div class="mono" id="resCostPLN">0.00</div>
+        </div>
+        <div class="card">
+          <div class="small">Marża %</div>
+          <div class="mono ok" id="resMarginPct">0.00%</div>
+        </div>
+        <div class="card">
+          <div class="small">Cena sprzedaży (PLN)</div>
+          <div class="mono" id="resTargetPLN">0.00</div>
+        </div>
+      </div>
+
+      <div class="grid cols-3" style="margin-top:12px">
+        <div class="card">
+          <div class="small">Suma materiałów USD</div>
+          <div class="mono" id="resMatUSD">0.00</div>
+        </div>
+        <div class="card">
+          <div class="small">Suma materiałów EUR</div>
+          <div class="mono" id="resMatEUR">0.00</div>
+        </div>
+        <div class="card">
+          <div class="small">Suma materiałów PLN</div>
+          <div class="mono" id="resMatPLN">0.00</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+// ===== KONFIG: URL Twojego Workera (po wdrożeniu punkt 2 poniżej) =====
+const WORKER_BASE = 'https://TWOJ-SUBDOMAIN.workers.dev'; // ← ZMIEŃ na swój adres!
+
+// ============================================================
+//  Frontend: działa na GitHub Pages. Baza = plik JSON w repo,
+//  zapisywany przez bezpieczny Cloudflare Worker (token w sekrecie).
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function(){
+  // ======= STATE =======
+  const DEFAULT_ROW = () => ({ id: uid('R'), name:'', part:'', supplier:'', qty:1, unitUSD:0, unitEUR:0, unitPLN:0, lastEdited:'PLN' });
+  const DEFAULT_LIST = () => ({ id: uid('L'), name: 'Nowa lista', rows: [], analysis: { importPLN: 0, exportPLN: 0, marginPct: 0, targetPricePLN: 0 } });
+  const state = { lists: [], currentListId: null, rates: { USDPLN: null, EURPLN: null, asOf: null }, theme: localStorage.getItem('theme') || 'light' };
+
+  // ===== UTIL =====
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const fmt = (n, d=2) => (isFinite(n) ? Number(n).toFixed(d) : '0.00');
+  const uid = (p) => p + Math.random().toString(36).slice(2,9);
+  const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+
+  function saveLocal(){ try{ localStorage.setItem('kalk-marza-lists', JSON.stringify(state)); }catch(e){} }
+  function loadLocal(){ const raw = localStorage.getItem('kalk-marza-lists'); if(!raw) return; try{ const data = JSON.parse(raw); Object.assign(state, data); }catch(e){} }
+
+  // ===== REMOTE (Worker) =====
+  async function pullCloud(){
+    setCloudBadge('pobieram…');
+    try{
+      const r = await fetch(WORKER_BASE + '/data', { cache:'no-store' });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const json = await r.json();
+      if(json && typeof json === 'object'){
+        // spodziewamy się { state: {...} } lub sam obiekt state dla kompatybilności
+        const payload = json.state || json;
+        if(payload && typeof payload === 'object'){
+          state.lists = payload.lists || state.lists;
+          state.currentListId = payload.currentListId || state.currentListId;
+          state.rates = payload.rates || state.rates;
+          state.theme = payload.theme || state.theme;
+          saveLocal();
+          refreshListSelect(); renderRows(); updateAnalysis(); applyTheme();
+        }
+      }
+      setCloudBadge('online');
+    }catch(e){ console.error(e); setCloudBadge('offline'); alert('Nie udało się pobrać bazy z chmury. Sprawdź WORKER_BASE.'); }
   }
 
-  // ======= INIT =======
-  load();
+  const pushCloud = debounce(async function(){
+    if(!WORKER_BASE || WORKER_BASE.includes('TWOJ-SUBDOMAIN')) return; // użytkownik nie skonfigurował
+    setCloudBadge('zapisuję…');
+    try{
+      const r = await fetch(WORKER_BASE + '/data', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ state })
+      });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      setCloudBadge('online');
+    }catch(e){ console.error(e); setCloudBadge('offline'); }
+  }, 800);
 
-  if(state.lists.length === 0){
-    const list = DEFAULT_LIST();
-    list.name = 'Lista 1';
-    list.rows = [{ name:'', part:'', supplier:'', qty:1, unitUSD:0, unitEUR:0, unitPLN:0, lastEdited:'PLN' }];
-    state.lists.push(list);
-    state.currentListId = list.id;
-  }else if(!state.currentListId){
-    state.currentListId = state.lists[0].id;
+  function setCloudBadge(txt){ const b = $('#cloudBadge'); if(!b) return; b.textContent = 'Cloud: ' + txt; }
+
+  // ===== KURSY NBP =====
+  async function fetchNBPRates(){ const btn=$('#btnFetch'); btn.disabled=true; btn.textContent='Pobieram...';
+    try{ const res = await fetch('https://api.nbp.pl/api/exchangerates/tables/A?format=json', {headers:{'Accept':'application/json'}});
+      if(!res.ok) throw new Error('NBP HTTP '+res.status);
+      const data = await res.json(); const table = data?.[0]; const rates = table?.rates || [];
+      const USD = rates.find(r => r.code==='USD'); const EUR = rates.find(r => r.code==='EUR');
+      state.rates.USDPLN = Number(USD.mid); state.rates.EURPLN = Number(EUR.mid); state.rates.asOf = table?.effectiveDate || new Date().toISOString().slice(0,10);
+      $('#rateUSD').value = state.rates.USDPLN; $('#rateEUR').value = state.rates.EURPLN; $('#rateStamp').textContent = `Kurs z: ${state.rates.asOf}`;
+      saveLocal(); recalcAll(); updateAnalysis(); pushCloud();
+    }catch(err){ alert('Nie udało się pobrać kursów NBP. Wpisz kursy ręcznie.'); }
+    finally{ btn.disabled=false; btn.textContent='Pobierz kursy'; }
   }
 
-  refreshListSelect();
-  wire();
-  applyTheme();
-  renderRows();
+  // ===== LISTY UI =====
+  function refreshListSelect(){ const sel=$('#listSelect'); sel.innerHTML=''; state.lists.forEach(l=>{ const opt=document.createElement('option'); opt.value=l.id; opt.textContent=l.name||'Bez nazwy'; sel.appendChild(opt); }); sel.value=state.currentListId || (state.lists[0]?.id||''); $('#listName').value = currentList()?.name || '' }
+  function currentList(){ return state.lists.find(l=>l.id===state.currentListId); }
 
-  if(state.rates?.USDPLN) $('#rateUSD').value = state.rates.USDPLN;
-  if(state.rates?.EURPLN) $('#rateEUR').value = state.rates.EURPLN;
-  if(state.rates?.asOf) $('#rateStamp').textContent = `Kurs z: ${state.rates.asOf}`;
-  updateAnalysis();
-
-  if(!state.rates?.USDPLN || !state.rates?.EURPLN){
-    fetchNBPRates().catch(()=>{});
+  function renderRows(){ const tb=$('#rows'); tb.innerHTML=''; const cl=currentList(); if(!cl) return; const {USDPLN,EURPLN}=state.rates;
+    cl.rows.forEach(row=>{ const tr=document.createElement('tr');
+      tr.innerHTML = [
+        `<td><textarea data-k="name" rows="2" placeholder="Opis materiału">${row.name||''}</textarea></td>`,
+        `<td><input data-k="part" type="text" placeholder="Nr części" value="${row.part||''}" /></td>`,
+        `<td><input data-k="supplier" type="text" placeholder="Dostawca" value="${row.supplier||''}" /></td>`,
+        `<td><input class="num" data-k="qty" type="number" min="0" step="1" value="${row.qty||1}"/></td>`,
+        `<td><input class="num" data-k="unitUSD" type="number" step="0.01" value="${fmt(row.unitUSD||0)}"/></td>`,
+        `<td><input class="num" data-k="unitEUR" type="number" step="0.01" value="${fmt(row.unitEUR||0)}"/></td>`,
+        `<td><input class="num" data-k="unitPLN" type="number" step="0.01" value="${fmt(row.unitPLN||0)}"/></td>`,
+        `<td class="mono">${fmt(toPLN(row, USDPLN, EURPLN))}</td>`,
+        `<td><button data-act="del" class="ghost">Usuń</button></td>`
+      ].join('');
+      tr.dataset.id=row.id; tb.appendChild(tr);
+    });
+    tb.addEventListener('input', onEdit, {once:true});
+    tb.addEventListener('click', onClick, {once:true});
+    updateSum();
   }
+
+  function onEdit(e){ const tr=e.target.closest('tr'); if(!tr) return; const id=tr.dataset.id; const k=e.target.dataset.k; if(!k) return; const cl=currentList(); const row=cl.rows.find(r=>r.id===id); if(!row) return;
+    if(['qty','unitUSD','unitEUR','unitPLN'].includes(k)) row[k]=Number(e.target.value||0); else row[k]=e.target.value;
+    if(['unitUSD','unitEUR','unitPLN'].includes(k)) row.lastEdited=k.replace('unit','');
+    saveLocal(); renderRows(); updateAnalysis(); pushCloud();
+  }
+
+  function onClick(e){ if(e.target.dataset.act==='del'){ const id=e.target.closest('tr')?.dataset.id; const cl=currentList(); cl.rows = cl.rows.filter(r=>r.id!==id); saveLocal(); renderRows(); updateAnalysis(); pushCloud(); } }
+
+  function updateSum(){ const cl=currentList(); if(!cl) return; const {USDPLN,EURPLN}=state.rates; const sum=cl.rows.reduce((acc,r)=> acc + toPLN(r,USDPLN,EURPLN), 0); $('#sumPLN').textContent=fmt(sum); }
+
+  function toPLN(row, USDPLN, EURPLN){ const qty=Number(row.qty||0);
+    if(row.lastEdited==='USD' && USDPLN) return qty * Number(row.unitUSD||0) * USDPLN;
+    if(row.lastEdited==='EUR' && EURPLN) return qty * Number(row.unitEUR||0) * EURPLN;
+    if(row.lastEdited==='PLN') return qty * Number(row.unitPLN||0);
+    if(row.unitPLN) return qty * Number(row.unitPLN||0);
+    if(row.unitUSD && USDPLN) return qty * Number(row.unitUSD||0) * USDPLN;
+    if(row.unitEUR && EURPLN) return qty * Number(row.unitEUR||0) * EURPLN; return 0; }
+
+  function updateAnalysis(){ const cl=currentList(); if(!cl) return; const sumPLN=Number($('#sumPLN').textContent)||0; const importPLN=Number($('#costImport').value||cl.analysis.importPLN||0); const exportPLN=Number($('#costExport').value||cl.analysis.exportPLN||0); let marginPct=($('#marginPct').value!==''?Number($('#marginPct').value):cl.analysis.marginPct||0); let targetPLN=($('#targetPrice').value!==''?Number($('#targetPrice').value):cl.analysis.targetPricePLN||0);
+    const cost=sumPLN+importPLN+exportPLN; const lastEdit=updateAnalysis.lastEdit||'margin'; if(lastEdit==='margin'){ targetPLN = cost * (1+(marginPct/100)); } else { marginPct = cost ? ((targetPLN-cost)/cost)*100 : 0; }
+    cl.analysis={ importPLN, exportPLN, marginPct, targetPricePLN: targetPLN };
+    $('#resCostPLN').textContent=fmt(cost); $('#resMarginPct').textContent=fmt(marginPct,2)+'%'; $('#resTargetPLN').textContent=fmt(targetPLN);
+    const {USDPLN,EURPLN}=state.rates; const sumUSD=USDPLN? sumPLN/USDPLN:0; const sumEUR=EURPLN? sumPLN/EURPLN:0; $('#resMatUSD').textContent=fmt(sumUSD); $('#resMatEUR').textContent=fmt(sumEUR); $('#resMatPLN').textContent=fmt(sumPLN);
+    saveLocal(); pushCloud();
+  }
+
+  function wire(){
+    $('#btnTheme').addEventListener('click', ()=>{ state.theme = (state.theme==='light'?'dark':'light'); saveLocal(); applyTheme(); });
+    $('#btnFetch').addEventListener('click', fetchNBPRates);
+    $('#btnAdd').addEventListener('click', ()=>{ const cl=currentList(); cl.rows.push(DEFAULT_ROW()); saveLocal(); renderRows(); pushCloud(); });
+    $('#btnClear').addEventListener('click', ()=>{ const cl=currentList(); if(confirm('Wyczyścić wszystkie wiersze tej listy?')){ cl.rows=[]; saveLocal(); renderRows(); updateAnalysis(); pushCloud(); } });
+    $$('.tab').forEach(t=> t.addEventListener('click', ()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const name=t.dataset.tab; $('#tab-bom').hidden = name!=='bom'; $('#tab-analysis').hidden = name!=='analysis'; document.documentElement.style.setProperty('--stickyTop', name==='bom' ? 'calc(56px + 16px)' : '56px'); }));
+    $('#listSelect').addEventListener('change', (e)=>{ state.currentListId=e.target.value; saveLocal(); renderRows(); updateAnalysis(); pushCloud(); });
+    $('#listName').addEventListener('input', (e)=>{ const cl=currentList(); cl.name=e.target.value; saveLocal(); refreshListSelect(); pushCloud(); });
+    $('#btnNewList').addEventListener('click', ()=>{ const list=DEFAULT_LIST(); list.name='Lista '+(state.lists.length+1); state.lists.push(list); state.currentListId=list.id; saveLocal(); refreshListSelect(); renderRows(); updateAnalysis(); pushCloud(); });
+    $('#btnDeleteList').addEventListener('click', ()=>{ if(!state.currentListId) return; if(!confirm('Usunąć bieżącą listę?')) return; state.lists = state.lists.filter(l=>l.id!==state.currentListId); state.currentListId = state.lists[0]?.id || null; saveLocal(); refreshListSelect(); renderRows(); updateAnalysis(); pushCloud(); });
+    $('#costImport').addEventListener('input', ()=>{ updateAnalysis.lastEdit='margin'; updateAnalysis(); });
+    $('#costExport').addEventListener('input', ()=>{ updateAnalysis.lastEdit='margin'; updateAnalysis(); });
+    $('#marginPct').addEventListener('input', ()=>{ updateAnalysis.lastEdit='margin'; updateAnalysis(); });
+    $('#targetPrice').addEventListener('input', ()=>{ updateAnalysis.lastEdit='price'; updateAnalysis(); });
+    $('#rateUSD').addEventListener('input', ()=>{ state.rates.USDPLN=Number($('#rateUSD').value||0); saveLocal(); recalcAll(); updateAnalysis(); });
+    $('#rateEUR').addEventListener('input', ()=>{ state.rates.EURPLN=Number($('#rateEUR').value||0); saveLocal(); recalcAll(); updateAnalysis(); });
+    $('#btnPull').addEventListener('click', pullCloud);
+    $('#btnPush').addEventListener('click', ()=> pushCloud());
+  }
+
+  function recalcAll(){ renderRows(); updateSum(); }
+  function applyTheme(){ if(state.theme==='dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); }
+
+  // INIT
+  loadLocal();
+  if(state.lists.length===0){ const list=DEFAULT_LIST(); list.name='Lista 1'; list.rows=[DEFAULT_ROW()]; state.lists.push(list); state.currentListId=list.id; }
+  else if(!state.currentListId){ state.currentListId = state.lists[0].id; }
+  refreshListSelect(); wire(); applyTheme(); renderRows();
+  if(state.rates?.USDPLN) $('#rateUSD').value=state.rates.USDPLN; if(state.rates?.EURPLN) $('#rateEUR').value=state.rates.EURPLN; if(state.rates?.asOf) $('#rateStamp').textContent=`Kurs z: ${state.rates.asOf}`; updateAnalysis();
+
+  // Pierwsze pobranie bazy z chmury (jeśli skonfigurowano URL)
+  if(WORKER_BASE && !WORKER_BASE.includes('TWOJ-SUBDOMAIN')) pullCloud();
 });
 </script>
 </body>
